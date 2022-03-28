@@ -526,7 +526,7 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
             return make_response("malformed request", 400)
         
         for rpi_output in self.rpi_outputs:
-            if gpio_index == self.to_int(rpi_output['index_id']):
+            if identifier == self.to_int(rpi_output['index_id']):
                 #self._logger.info("DotStar Output Data: %s", rpi_output)
                 led_count = rpi_output['dotstar_count']
                 use_spi = rpi_output['dotstar_use_spi']
@@ -540,11 +540,11 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
                     clock_pin = self.to_int(rpi_output['dotstar_clock_pin'])
 
                 if rpi_output['dotstar_color'] is None:
-                        red, green, blue = self.get_color_from_rgb(rpi_output['default_dotstar_color'])
-                    else:
-                        red, green, blue = self.get_color_from_rgb(rpi_output['dotstar_color'])
-                        
-                
+                    red, green, blue = self.get_color_from_rgb(rpi_output['default_dotstar_color'])
+                else:
+                    red, green, blue = self.get_color_from_rgb(rpi_output['dotstar_color'])
+
+                active = is_active
                 # Default lights to on if color information is sent (lowest priority)
                 if any(k in data for k in ['red', 'green', 'blue', 'brightness']):
                     active = True
@@ -552,9 +552,6 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
                 # Toggle is lower priority than status
                 if 'toggle' in data:
                     active = not is_active
-                else:
-                    active = is_active
-                    
 
                 # Status is highest priority, but also avoid corrupting it with 0/1
                 if 'status' in data:
@@ -565,7 +562,7 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
                 blue = data['blue'] if 'blue' in data else blue
                 brightness = data['brightness'] if 'brightness' in data else rpi_output['brightness']
 
-                self.send_dotstar_command(gpio_index, active, data_pin, clock_pin, led_count, brightness, red, green, blue)
+                self.send_dotstar_command(identifier, active, data_pin, clock_pin, led_count, brightness, red, green, blue)
 
         return make_response('', 204)
 
