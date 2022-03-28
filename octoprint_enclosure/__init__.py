@@ -567,7 +567,7 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
 
                 self.send_dotstar_command(gpio_index, active, data_pin, clock_pin, led_count, brightness, red, green, blue)
 
-        return jsonify(success=True)
+        return make_response('', 204)
 
     @octoprint.plugin.BlueprintPlugin.route("/clear-gpio", methods=["POST"])
     @restricted_access
