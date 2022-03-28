@@ -513,7 +513,61 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
                     blue, address, neopixel_dirrect, identifier)
 
         return make_response('', 204)
+    
+    @octoprint.plugin.BlueprintPlugin.route("/dotstar/<int:identifier>", methods=["PATCH"])
+    @restricted_access
+    def set_dotstar(self, identifier):
+        """ set_dotstar method get request from octoprint and send the command to arduino or dotstar"""
+        if "application/json" not in request.headers["Content-Type"]:
+            return make_response("expected json", 400)
+        try:
+            data = request.json
+        except BadRequest:
+            return make_response("malformed request", 400)
+        
+        for rpi_output in self.rpi_outputs:
+            if gpio_index == self.to_int(rpi_output['index_id']):
+                #self._logger.info("DotStar Output Data: %s", rpi_output)
+                led_count = rpi_output['dotstar_count']
+                use_spi = rpi_output['dotstar_use_spi']
+                is_active = rpi_output['dotstar_active']
 
+                if use_spi == True:
+                    data_pin = 0
+                    clock_pin = 0
+                else:
+                    data_pin =self.to_int(rpi_output['dotstar_data_pin'])
+                    clock_pin = self.to_int(rpi_output['dotstar_clock_pin'])
+
+                if rpi_output['dotstar_color'] is None:
+                        red, green, blue = self.get_color_from_rgb(rpi_output['default_dotstar_color'])
+                    else:
+                        red, green, blue = self.get_color_from_rgb(rpi_output['dotstar_color'])
+                        
+                
+                # Default lights to on if color information is sent (lowest priority)
+                if any(k in data for k in ['red', 'green', 'blue', 'brightness']):
+                    active = True
+                    
+                # Toggle is lower priority than status
+                if 'toggle' in data:
+                    active = not is_active
+                else:
+                    active = is_active
+                    
+
+                # Status is highest priority, but also avoid corrupting it with 0/1
+                if 'status' in data:
+                    active = True if request.values["status"] else False
+
+                red = data['red'] if 'red' in data else red
+                green = data['green'] if 'green' in data else green
+                blue = data['blue'] if 'blue' in data else blue
+                brightness = data['brightness'] if 'brightness' in data else rpi_output['brightness']
+
+                self.send_dotstar_command(gpio_index, active, data_pin, clock_pin, led_count, brightness, red, green, blue)
+
+        return jsonify(success=True)
 
     @octoprint.plugin.BlueprintPlugin.route("/clear-gpio", methods=["POST"])
     @restricted_access
