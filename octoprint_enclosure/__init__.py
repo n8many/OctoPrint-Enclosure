@@ -560,7 +560,7 @@ class EnclosurePlugin(octoprint.plugin.StartupPlugin, octoprint.plugin.TemplateP
                 red = data['red'] if 'red' in data else red
                 green = data['green'] if 'green' in data else green
                 blue = data['blue'] if 'blue' in data else blue
-                brightness = data['brightness'] if 'brightness' in data else rpi_output['brightness']
+                brightness = data['brightness'] if 'brightness' in data else rpi_output['dotstar_brightness']
 
                 self.send_dotstar_command(identifier, active, data_pin, clock_pin, led_count, brightness, red, green, blue)
 
